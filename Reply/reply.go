@@ -24,27 +24,34 @@ func Repl(update tgbotapi.Update, text string, keyboard *tgbotapi.InlineKeyboard
 	} else if update.Message != nil && update.Message.ReplyToMessage != nil && update.Message.ReplyToMessage.MessageID != 0 {
 		replyToMessageId = update.Message.ReplyToMessage.MessageID
 	}
-
+	var sendText string
 	// Send the message parts iteratively
 	for i := 0; i < len(messageParts); i++ {
 		part := messageParts[i]
-		// Build the message options
-		message := update.Message
-		if message == nil {
-			message = update.CallbackQuery.Message
+		leng := len(part) + len(sendText)
+		ip1 := i + 1
+		if leng >= 4000 || len(messageParts) == ip1 {
+			message := update.Message
+			if message == nil {
+				message = update.CallbackQuery.Message
+			}
+			msg := tgbotapi.NewMessage(message.Chat.ID, sendText)
+			msg.ParseMode = "HTML"
+			msg.ReplyToMessageID = replyToMessageId
+			msg.DisableWebPagePreview = true
+			if keyboard != nil && len(messageParts) == ip1 {
+				msg.ReplyMarkup = keyboard
+			}
+			if len(messageParts) == ip1 {
+				Bot.Send(msg)
+				sendText = ""
+			} else {
+				Bot.Send(msg)
+				sendText = part
+			}
+		} else {
+			sendText += ("\n" + part)
 		}
-		msg := tgbotapi.NewMessage(message.Chat.ID, part)
-		msg.ParseMode = "HTML"
-		msg.ReplyToMessageID = replyToMessageId
-		msg.DisableWebPagePreview = true
-
-		// Add the keyboard if it's provided and it's the last part
-		if keyboard != nil && i == len(messageParts)-1 {
-			msg.ReplyMarkup = keyboard
-		}
-
-		// Send the message part
-		Bot.Send(msg)
 	}
 
 	return nil

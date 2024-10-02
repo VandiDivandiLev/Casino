@@ -50,34 +50,41 @@ func main() {
 		if update.Message != nil {
 			// Construct a new message from the given chat ID and containing
 			// the text that we received.
-			splitText := strings.Split(strings.ToLower(update.Message.Text), " ")
-			switch splitText[0] {
-			case "баланс":
-				user := update.Message.From.ID
-				balance, ok := users[user]
+			switch update.Message.Command() {
+			case "start":
+				reply.Repl(update, "👋 Привет! Я бот для игры в казино", nil, bot)
+			case "help":
+				reply.Repl(update, "👉 Мои игры: \n<code>монетка</code>", nil, bot)
+			default:
+				splitText := strings.Split(strings.ToLower(update.Message.Text), " ")
+				switch splitText[0] {
+				case "баланс":
+					user := update.Message.From.ID
+					balance, ok := users[user]
 
-				if !ok {
-					// User doesn't exist, create a new entry with balance 0
-					balance = User{ID: user, Balance: 0}
-					users[user] = balance
-				}
+					if !ok {
+						// User doesn't exist, create a new entry with balance 0
+						balance = User{ID: user, Balance: 0}
+						users[user] = balance
+					}
 
-				fmt.Println(ok, users) // Print debugging information
+					fmt.Println(ok, users) // Print debugging information
 
-				// Format the balance string for the message
-				var balanceString string = fmt.Sprintf("Ваш баланс: %d", balance.Balance)
-				fmt.Println(balanceString)
-				reply.Repl(update, balanceString, nil, bot)
-			case "монетка":
-				amount := 1
-				if len(splitText) >= 2 {
-					amount, _ = strconv.Atoi(splitText[1])
+					// Format the balance string for the message
+					var balanceString string = fmt.Sprintf("Ваш баланс: %d", balance.Balance)
+					fmt.Println(balanceString)
+					reply.Repl(update, balanceString, nil, bot)
+				case "монетка":
+					amount := 1
+					if len(splitText) >= 2 {
+						amount, _ = strconv.Atoi(splitText[1])
+					}
+					if amount <= 0 {
+						amount = 1
+					}
+					replString, Keybord := centgame.StartCentGame(amount)
+					reply.Repl(update, replString, Keybord, bot)
 				}
-				if amount <= 0 {
-					amount = 1
-				}
-				replString, Keybord := centgame.StartCentGame(amount)
-				reply.Repl(update, replString, Keybord, bot)
 			}
 		} else if update.CallbackQuery != nil {
 			// Respond to the callback query, telling Telegram to show the user
@@ -90,14 +97,26 @@ func main() {
 			case "CentGame":
 				cost, _ := strconv.Atoi(data[2])
 				chose, _ := strconv.ParseBool(data[1])
-				text, amount := centgame.PlayGame(cost, chose)
 				Info, ok := users[user]
 				if !ok {
 					users[user] = User{ID: user, Balance: 0}
 				}
-				NewBal := Info.Balance + amount
-				users[user] = User{ID: user, Balance: NewBal}
-				reply.Repl(update, text, nil, bot)
+				if Info.Balance >= cost {
+					text, amount := centgame.PlayGame(cost, chose)
+
+					NewBal := Info.Balance + amount
+					users[user] = User{ID: user, Balance: NewBal}
+					reply.Repl(update, text, nil, bot)
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, text)
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				} else {
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "❌ Недостаточно средств")
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				}
 			}
 
 		}

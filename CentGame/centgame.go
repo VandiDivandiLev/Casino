@@ -2,6 +2,7 @@ package centgame
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -24,7 +25,7 @@ func PlayGame(amount int, Part bool) (string, int) {
 		randomBool = true
 	}
 	if randomBool == Part {
-		return fmt.Sprintf("🤩 Ты выиграл! Полчучено %d денег", amount*2), amount
+		return fmt.Sprintf("🤩 Ты выиграл! Полчучено %d денег", amount), amount
 	}
-	return "😭 Ты проиграл...", 0
+	return "😭 Ты проиграл...", int(math.Abs(float64(amount))) * -1
 }
