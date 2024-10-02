@@ -69,8 +69,10 @@ func main() {
 				fmt.Println(balanceString)
 				reply.Repl(update, balanceString, nil, bot)
 			case "монетка":
-				amount, _ := strconv.Atoi(splitText[1])
-				fmt.Println(amount)
+				amount := 1
+				if len(splitText) >= 2 {
+					amount, _ = strconv.Atoi(splitText[1])
+				}
 				if amount <= 0 {
 					amount = 1
 				}
