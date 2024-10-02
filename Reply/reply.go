@@ -35,6 +35,10 @@ func Repl(update tgbotapi.Update, text string, keyboard *tgbotapi.InlineKeyboard
 			if message == nil {
 				message = update.CallbackQuery.Message
 			}
+			if len(messageParts) == ip1 {
+				sendText += "\n"
+				sendText += part
+			}
 			msg := tgbotapi.NewMessage(message.Chat.ID, sendText)
 			msg.ParseMode = "HTML"
 			msg.ReplyToMessageID = replyToMessageId
@@ -42,15 +46,12 @@ func Repl(update tgbotapi.Update, text string, keyboard *tgbotapi.InlineKeyboard
 			if keyboard != nil && len(messageParts) == ip1 {
 				msg.ReplyMarkup = keyboard
 			}
-			if len(messageParts) == ip1 {
-				Bot.Send(msg)
-				sendText = ""
-			} else {
-				Bot.Send(msg)
-				sendText = part
-			}
+
+			Bot.Send(msg)
+			sendText = part
 		} else {
-			sendText += ("\n" + part)
+			sendText += "\n"
+			sendText += part
 		}
 	}
 
