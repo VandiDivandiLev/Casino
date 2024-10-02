@@ -1,0 +1,93 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+var numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Получить", "get"),
+	),
+)
+
+func main() {
+	bot, err := tgbotapi.NewBotAPI("7963920921:AAHdR6SPypX17fBg3cGNxwp4a-h2t2W_2DU")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	bot.Debug = true
+
+	log.Printf("Authorized on account %s", bot.Self.UserName)
+
+	users := map[int64]int{
+		int64(bot.Self.ID): int(0),
+	}
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	updates := bot.GetUpdatesChan(u)
+
+	// Loop through each update.
+	for update := range updates {
+		// Check if we've gotten a message update.
+		if update.Message != nil {
+			// Construct a new message from the given chat ID and containing
+			// the text that we received.
+			switch strings.ToLower(update.Message.Text) {
+			case "баланс":
+				user := update.Message.From.ID
+				balance, ok := users[user]
+
+				if !ok {
+					// User doesn't exist, create a new entry with balance 0
+					balance = 0
+					users[user] = balance
+				}
+
+				fmt.Println(ok, users) // Print debugging information
+
+				// Format the balance string for the message
+				var balanceString string = fmt.Sprintf("Ваш баланс: %d", balance)
+				fmt.Println(balanceString)
+
+				// Create the Telegram message
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, balanceString)
+				// Send the message.
+				if _, err = bot.Send(msg); err != nil {
+					panic(err)
+				}
+			default:
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+				msg.ReplyMarkup = numericKeyboard
+				// Send the message.
+				if _, err = bot.Send(msg); err != nil {
+					panic(err)
+				}
+			}
+
+		} else if update.CallbackQuery != nil {
+			// Respond to the callback query, telling Telegram to show the user
+			// a message with the data received.
+
+			// And finally, send a message containing the data received.
+			user := update.CallbackQuery.From.ID
+			_, ok := users[user]
+			if !ok {
+				users[user] = 0
+			}
+			users[user]++
+			var balanceString string = fmt.Sprintf("Поулучено: 1, ваш баланс: %d", users[user])
+
+			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, balanceString)
+			if _, err := bot.Request(callback); err != nil {
+				panic(err)
+			}
+		}
+	}
+}
