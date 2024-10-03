@@ -55,7 +55,7 @@ func main() {
 			case "start":
 				reply.Repl(update, "👋 Привет! Я бот для игры в казино", nil, bot)
 			case "help":
-				reply.Repl(update, "👉 Мои игры: \n<code>монетка</code>", nil, bot)
+				reply.Repl(update, "👉 Мои игры: \n<code>монетка</code>\n<code>кубик</code>", nil, bot)
 			default:
 				splitText := strings.Split(strings.ToLower(update.Message.Text), " ")
 				switch splitText[0] {
