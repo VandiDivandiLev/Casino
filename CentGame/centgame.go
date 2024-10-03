@@ -8,6 +8,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+func getSymbol(isHeads bool) string {
+	if isHeads {
+		return "🦅 Орел"
+	} else {
+		return "🪙 Решка"
+	}
+}
+
 func StartCentGame(amount int) (string, *tgbotapi.InlineKeyboardMarkup) {
 	InlineKeyBoard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
@@ -24,8 +32,10 @@ func PlayGame(amount int, Part bool) (string, int) {
 	if randInt == 1 {
 		randomBool = true
 	}
+	YoureChoice := getSymbol(Part)
+	BotChoice := getSymbol(randomBool)
 	if randomBool == Part {
-		return fmt.Sprintf("🤩 Ты выиграл! Полчучено %d денег", amount), amount
+		return fmt.Sprintf("🤩 Ты выиграл! Полчучено %d денег! (Выпало %s)", amount*2, BotChoice), amount
 	}
-	return "😭 Ты проиграл...", int(math.Abs(float64(amount))) * -1
+	return fmt.Sprintf("😭 Ты проиграл... (Выпало %s, ставка на %s)", BotChoice, YoureChoice), int(math.Abs(float64(amount))) * -1
 }

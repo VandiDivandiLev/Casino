@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	centgame "telegram-balance-bot/CentGame"
+	dicegame "telegram-balance-bot/DiceGame"
 	reply "telegram-balance-bot/Reply"
 	"telegram-balance-bot/config"
 
@@ -84,6 +85,16 @@ func main() {
 					}
 					replString, Keybord := centgame.StartCentGame(amount)
 					reply.Repl(update, replString, Keybord, bot)
+				case "кубик":
+					amount := 1
+					if len(splitText) >= 2 {
+						amount, _ = strconv.Atoi(splitText[1])
+					}
+					if amount <= 0 {
+						amount = 1
+					}
+					replString, Keybord := dicegame.ChoseDiceGame(amount)
+					reply.Repl(update, replString, Keybord, bot)
 				}
 			}
 		} else if update.CallbackQuery != nil {
@@ -93,16 +104,61 @@ func main() {
 			// And finally, send a message containing the data received.
 			user := update.CallbackQuery.From.ID
 			data := strings.Split(update.CallbackQuery.Data, "/")
+			Info, ok := users[user]
+			if !ok {
+				users[user] = User{ID: user, Balance: 0}
+			}
 			switch data[0] {
+			case "BiggerDiceGameStart":
+				cost, _ := strconv.Atoi(data[1])
+				text, keys := dicegame.StartDiceMoreGame(cost)
+				reply.Repl(update, text, keys, bot)
+			case "GuessDiceGameStart":
+				cost, _ := strconv.Atoi(data[1])
+				text, keys := dicegame.StartDiceGuessGame(cost)
+				reply.Repl(update, text, keys, bot)
 			case "CentGame":
 				cost, _ := strconv.Atoi(data[2])
 				chose, _ := strconv.ParseBool(data[1])
-				Info, ok := users[user]
-				if !ok {
-					users[user] = User{ID: user, Balance: 0}
-				}
 				if Info.Balance >= cost {
 					text, amount := centgame.PlayGame(cost, chose)
+
+					NewBal := Info.Balance + amount
+					users[user] = User{ID: user, Balance: NewBal}
+					reply.Repl(update, text, nil, bot)
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, text)
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				} else {
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "❌ Недостаточно средств")
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				}
+			case "DiceGuessGame":
+				cost, _ := strconv.Atoi(data[2])
+				chose, _ := strconv.Atoi(data[1])
+				if Info.Balance >= cost {
+					text, amount := dicegame.PlayGuessGame(cost, chose)
+
+					NewBal := Info.Balance + amount
+					users[user] = User{ID: user, Balance: NewBal}
+					reply.Repl(update, text, nil, bot)
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, text)
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				} else {
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "❌ Недостаточно средств")
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				}
+			case "DiceBiggerGame":
+				cost, _ := strconv.Atoi(data[1])
+				if Info.Balance >= cost {
+					text, amount := dicegame.PlayMoreGame(cost)
 
 					NewBal := Info.Balance + amount
 					users[user] = User{ID: user, Balance: NewBal}
