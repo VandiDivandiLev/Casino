@@ -25,7 +25,7 @@ func PlaySlotMachineGame(amount int) (string, int) {
 	slot1 := emojis[index1]
 	slot2 := emojis[index2]
 	slot3 := emojis[index3]
-	multiple := 100
+	multiple := 10
 	if slot1 == "7️⃣" {
 		multiple = 100
 	} else if slot1 == "🍀" || slot1 == "💰" || slot1 == "⭐" || slot1 == "🔔" {
