@@ -22,6 +22,9 @@ func PlayMoreGame(amount int) (string, int) {
 	randBotInt := rand.Intn(6)
 	randBotInt++
 	randInt++
+	if randBotInt == randInt {
+		return fmt.Sprintf("🤨 Ничья! (У тебя выпало %d, у бота %d)", randInt, randBotInt), 0
+	}
 	if randInt > randBotInt {
 		return fmt.Sprintf("🤩 Ты выиграл! Полчучено %d денег! (У тебя выпало %d, у бота %d)", amount*2, randInt, randBotInt), amount
 	}

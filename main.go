@@ -10,6 +10,7 @@ import (
 	centgame "telegram-balance-bot/CentGame"
 	dicegame "telegram-balance-bot/DiceGame"
 	reply "telegram-balance-bot/Reply"
+	slotmachinegame "telegram-balance-bot/SlotMachineGame"
 	"telegram-balance-bot/config"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -85,6 +86,16 @@ func main() {
 					}
 					replString, Keybord := centgame.StartCentGame(amount)
 					reply.Repl(update, replString, Keybord, bot)
+				case "автомат":
+					amount := 1
+					if len(splitText) >= 2 {
+						amount, _ = strconv.Atoi(splitText[1])
+					}
+					if amount <= 0 {
+						amount = 1
+					}
+					replString, Keybord := slotmachinegame.StartSlotMachineGame(amount)
+					reply.Repl(update, replString, Keybord, bot)
 				case "кубик":
 					amount := 1
 					if len(splitText) >= 2 {
@@ -159,6 +170,24 @@ func main() {
 				cost, _ := strconv.Atoi(data[1])
 				if Info.Balance >= cost {
 					text, amount := dicegame.PlayMoreGame(cost)
+
+					NewBal := Info.Balance + amount
+					users[user] = User{ID: user, Balance: NewBal}
+					reply.Repl(update, text, nil, bot)
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, text)
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				} else {
+					callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "❌ Недостаточно средств")
+					if _, err := bot.Request(callback); err != nil {
+						panic(err)
+					}
+				}
+			case "SlotMachineGame":
+				cost, _ := strconv.Atoi(data[1])
+				if Info.Balance >= cost {
+					text, amount := slotmachinegame.PlaySlotMachineGame(cost)
 
 					NewBal := Info.Balance + amount
 					users[user] = User{ID: user, Balance: NewBal}
